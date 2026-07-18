@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Syllabus Tracker</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:wght@600;700&display=swap');
+
+  :root{
+    --bg: #0B0B10;
+    --card: #15151C;
+    --card-2: #1C1C25;
+    --border: #2A2A35;
+    --text: #EDEDF2;
+    --muted: #8C8C9C;
+    --muted-2: #55555F;
+    --accent: #6C6CF5;
+    --accent-soft: rgba(108,108,245,0.16);
+    --accent-2: #17C3B2;
+    --danger: #F0605F;
+  }
+  *{ box-sizing: border-box; }
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    padding: 28px 16px 100px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap{ max-width: 940px; margin: 0 auto; }
+
+  /* ---------- Header ---------- */
+  .header{
+    display:flex; align-items:center; justify-content:space-between;
+    gap: 20px; flex-wrap: wrap; margin-bottom: 22px;
+  }
+  .header-text h1{
+    font-family: 'Fraunces', serif; font-weight: 700; font-size: 26px;
+    margin: 0 0 4px; letter-spacing: -0.2px;
+  }
+  .header-text p{ margin:0; color: var(--muted); font-size: 13.5px; }
+
+  /* ---------- Pie chart ---------- */
+  .pie-section{
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 22px 24px;
+    margin-bottom: 20px;
+    display:flex;
+    align-items:center;
+    gap: 28px;
+    flex-wrap: wrap;
+  }
+  .pie-wrap{ position:relative; width: 140px; height:140px; flex-shrink:0; }
+  .pie-wrap svg{ width:100%; height:100%; transform: rotate(-90deg); }
+  .pie-track{ fill:none; stroke: var(--card-2); stroke-width: 18; }
+  .pie-fill{ fill:none; stroke: var(--accent); stroke-width: 18; stroke-linecap: round; transition: stroke-dashoffset 0.6s ease; }
+  .pie-center{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .pie-center .pct{ font-size: 26px; font-weight: 800; font-family:'Fraunces', serif; }
+  .pie-center .lbl{ font-size: 10.5px; color: var(--muted); letter-spacing: 0.4px; margin-top:2px; }
+  .pie-legend{ display:flex; flex-direction:column; gap: 10px; font-size: 13.5px; }
+  .legend-row{ display:flex; align-items:center; gap: 9px; }
+  .legend-dot{ width: 10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .legend-row .val{ color: var(--muted); margin-left: 4px; font-variant-numeric: tabular-nums; }
+
+  /* ---------- Overview bars (graph chart) ---------- */
+  .overview{
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px 20px;
+    margin-bottom: 22px;
+  }
+  .overview-title{
+    font-size: 12px; text-transform: uppercase; letter-spacing: 0.6px;
+    color: var(--muted); font-weight: 600; margin-bottom: 14px;
+  }
+  .ov-row{ display:flex; align-items:center; gap: 12px; padding: 7px 0; }
+  .ov-row .name{ width: 108px; font-size: 13px; font-weight:500; flex-shrink:0; }
+  .ov-row .track{ flex:1; height: 6px; background: var(--card-2); border-radius: 4px; overflow:hidden; }
+  .ov-row .fill{ height:100%; background: var(--accent-2); border-radius:4px; transition: width 0.5s ease; }
+  .ov-row .pct{ width: 40px; text-align:right; font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  /* ---------- Add subject ---------- */
+  .add-subject-panel{
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px 18px;
+    margin-bottom: 22px;
+    display:flex;
+    gap:10px;
+  }
+  .add-subject-panel input{
+    flex:1;
+    background: var(--card-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+  }
+  .add-subject-panel input::placeholder{ color: var(--muted-2); }
+
+  .btn{
+    background: var(--accent);
+    color: #fff;
+    border:none;
+    border-radius: 10px;
+    padding: 10px 18px;
+    font-weight:600;
+    font-size: 13.5px;
+    cursor:pointer;
+    font-family: 'Inter', sans-serif;
+    transition: filter 0.15s, transform 0.1s;
+    white-space: nowrap;
+  }
+  .btn:hover{ filter: brightness(1.15); }
+  .btn:active{ transform: scale(0.98); }
+  .btn.small{ padding: 7px 12px; font-size: 12.5px; }
+  .btn.ghost{ background: transparent; border: 1px solid var(--border); color: var(--muted); }
+
+  /* ---------- Subject card ---------- */
+  .subject{
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    margin-bottom: 14px;
+    overflow: hidden;
+  }
+  .subject-head{
+    display:flex; align-items:center; gap:14px;
+    padding: 16px 18px;
+    cursor:pointer;
+    user-select: none;
+  }
+  .subject-head:hover{ background: var(--card-2); }
+  .chev{ color: var(--muted-2); font-size: 12px; transition: transform 0.2s ease; flex-shrink:0; }
+  .subject.expanded .chev{ transform: rotate(90deg); }
+  .subject-main{ flex:1; min-width:0; }
+  .subject-title-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .subject-title{ font-family:'Fraunces', serif; font-weight:600; font-size: 17px; }
+  .subject-count{ color: var(--muted); font-size:12.5px; margin-left: auto; }
+  .progress-track{
+    position:relative; width: 100%; height: 6px;
+    background: var(--card-2); border-radius: 6px; margin-top: 9px; overflow:hidden;
+  }
+  .progress-fill{ height:100%; background: var(--accent); border-radius: 6px; transition: width 0.5s ease; }
+  .del-btn{
+    background:none; border:none; color: var(--muted-2); cursor:pointer; font-size: 16px;
+    padding: 4px 6px; flex-shrink:0;
+  }
+  .del-btn:hover{ color: var(--danger); }
+
+  .subject-body{ display:none; padding: 4px 18px 16px; }
+  .subject.expanded .subject-body{ display:block; }
+
+  /* ---------- Part ---------- */
+  .part{ border-top: 1px solid var(--border); padding: 14px 0 6px; }
+  .part:first-child{ border-top:none; }
+  .part-head{ display:flex; align-items:center; gap:10px; margin-bottom: 10px; }
+  .part-title{ font-size: 13.5px; font-weight:600; color: var(--text); flex:1; }
+  .part-pct{ font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums;}
+  .part-progress{ height: 4px; background: var(--card-2); border-radius: 4px; margin-bottom: 12px; overflow:hidden; }
+  .part-progress .fill{ height:100%; background: var(--accent-2); border-radius:4px; transition: width 0.5s ease;}
+
+  /* ---------- Chapter ---------- */
+  .chapter{ padding: 10px 0; border-bottom: 1px solid var(--card-2); }
+  .chapter:last-child{ border-bottom: none; }
+  .chapter-row{ display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .chapter-name{ font-size: 14px; font-weight:500; flex:1; }
+  .chapter-pct-badge{
+    font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums;
+    background: var(--card-2); padding: 2px 7px; border-radius: 20px; flex-shrink:0;
+  }
+  .chapter-pct-badge.done{ color: var(--accent-2); background: rgba(23,195,178,0.14); font-weight:600; }
+  .chips{ display:flex; flex-wrap:wrap; gap: 6px; }
+  .chip{
+    font-size: 12px; padding: 5px 11px; border-radius: 20px;
+    border: 1px solid var(--border); background: var(--card-2); color: var(--muted);
+    cursor:pointer; font-family: 'Inter', sans-serif; transition: all 0.15s ease;
+  }
+  .chip.active{ background: var(--accent); border-color: var(--accent); color: #fff; }
+  .simple-check{ display:flex; align-items:center; gap: 10px; }
+  .simple-check input[type=checkbox]{ width: 19px; height:19px; accent-color: var(--accent); cursor:pointer; flex-shrink:0; }
+
+  .add-chapter-row{ display:flex; gap:8px; margin-top: 10px; }
+  .add-chapter-row input{
+    flex:1; background: var(--card-2); border: 1px solid var(--border); border-radius: 9px;
+    padding: 8px 11px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 13.5px;
+  }
+  .add-part-row{ display:flex; gap:8px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border); }
+  .add-part-row input{
+    flex:1; background: var(--card-2); border: 1px solid var(--border); border-radius: 9px;
+    padding: 8px 11px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 13.5px;
+  }
+  .add-chapter-row input::placeholder, .add-part-row input::placeholder{ color: var(--muted-2); }
+
+  .empty{ text-align:center; color: var(--muted); padding: 40px 20px; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div class="header-text">
+      <h1>Syllabus Tracker</h1>
+      <p id="overallSub">No chapters added yet</p>
+    </div>
+  </div>
+
+  <div class="pie-section">
+    <div class="pie-wrap">
+      <svg viewBox="0 0 140 140">
+        <circle class="pie-track" cx="70" cy="70" r="53"></circle>
+        <circle id="pieFill" class="pie-fill" cx="70" cy="70" r="53" stroke-dasharray="333" stroke-dashoffset="333"></circle>
+      </svg>
+      <div class="pie-center">
+        <div class="pct" id="piePct">0%</div>
+        <div class="lbl">COMPLETE</div>
+      </div>
+    </div>
+    <div class="pie-legend">
+      <div class="legend-row"><span class="legend-dot" style="background:var(--accent)"></span>Completed <span class="val" id="legendDone">0 items</span></div>
+      <div class="legend-row"><span class="legend-dot" style="background:var(--card-2); border:1px solid var(--border);"></span>Remaining <span class="val" id="legendRemaining">0 items</span></div>
+    </div>
+  </div>
+
+  <div class="overview" id="overviewPanel" style="display:none;">
+    <div class="overview-title">Subjects at a Glance</div>
+    <div id="overviewRows"></div>
+  </div>
+
+  <div class="add-subject-panel">
+    <input id="newSubjectInput" type="text" placeholder="New subject name">
+    <button class="btn" id="addSubjectBtn">Add Subject</button>
+  </div>
+
+  <div id="subjectsContainer"></div>
+  <div id="emptyState" class="empty" style="display:none;">No subjects yet. Add one above to get started.</div>
+
+</div>
+
+<script>
+const STORAGE_KEY = 'syllabus-data-v3';
+
+const TYPES = {
+  full:   { items: ['Note','Main Book','Test Paper','MCQ','Question Bank'] },
+  bioict: { items: ['Note','Main Book','MCQ','CQ'] },
+  bangla: { items: ['Goddo','Poddo','Shohopath'] },
+  simple: { items: ['Done'] }
+};
+
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+function makeChapter(name, type){
+  const subItems = {};
+  TYPES[type].items.forEach(k => subItems[k] = false);
+  return { id: uid(), name, subItems };
+}
+
+function defaultData(){
+  const s = (name, type, parts) => ({
+    id: uid(), name, type,
+    parts: parts.map(pname => ({ id: uid(), name: pname, chapters: [] }))
+  });
+  return {
+    subjects: [
+      s('Physics', 'full', ['1st Paper','2nd Paper']),
+      s('Chemistry', 'full', ['1st Paper','2nd Paper']),
+      s('Higher Math', 'full', ['1st Paper','2nd Paper']),
+      s('Biology', 'bioict', ['1st Paper','2nd Paper']),
+      s('ICT', 'bioict', ['Full Book']),
+      s('Bangla', 'bangla', ['1st Paper','2nd Paper']),
+      s('English', 'simple', ['1st Paper','2nd Paper']),
+    ]
+  };
+}
+
+let data = null;
+let expanded = new Set();
+
+async function loadData(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){ data = JSON.parse(raw); }
+    else { data = defaultData(); saveData(); }
+  }catch(e){ data = defaultData(); }
+  data.subjects.forEach(s => expanded.add(s.id));
+  render();
+}
+
+function saveData(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+  catch(e){ console.error('Save failed', e); }
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+/* ---------- Stats ---------- */
+function chapterStats(ch){
+  const keys = Object.keys(ch.subItems);
+  const total = keys.length;
+  const done = keys.filter(k => ch.subItems[k]).length;
+  return { total, done, pct: total ? Math.round(done/total*100) : 0 };
+}
+function partStats(part){
+  let total = 0, done = 0;
+  part.chapters.forEach(ch => { const s = chapterStats(ch); total += s.total; done += s.done; });
+  return { total, done, pct: total ? Math.round(done/total*100) : 0 };
+}
+function subjectStats(subject){
+  let total = 0, done = 0;
+  subject.parts.forEach(p => { const s = partStats(p); total += s.total; done += s.done; });
+  return { total, done, pct: total ? Math.round(done/total*100) : 0 };
+}
+function overallStats(){
+  let total = 0, done = 0;
+  data.subjects.forEach(s => { const st = subjectStats(s); total += st.total; done += st.done; });
+  return { total, done, pct: total ? Math.round(done/total*100) : 0 };
+}
+
+/* ---------- Mutations ---------- */
+function addSubject(name){
+  if(!name.trim()) return;
+  const s = { id: uid(), name: name.trim(), type: 'simple', parts: [{ id: uid(), name: 'Part 1', chapters: [] }] };
+  data.subjects.push(s);
+  expanded.add(s.id);
+  saveData(); render();
+}
+function deleteSubject(id){
+  data.subjects = data.subjects.filter(s => s.id !== id);
+  saveData(); render();
+}
+function addPart(subjectId, name){
+  if(!name.trim()) return;
+  const subject = data.subjects.find(s => s.id === subjectId);
+  if(!subject) return;
+  subject.parts.push({ id: uid(), name: name.trim(), chapters: [] });
+  saveData(); render();
+}
+function deletePart(subjectId, partId){
+  const subject = data.subjects.find(s => s.id === subjectId);
+  if(!subject) return;
+  subject.parts = subject.parts.filter(p => p.id !== partId);
+  saveData(); render();
+}
+function addChapter(subjectId, partId, name){
+  if(!name.trim()) return;
+  const subject = data.subjects.find(s => s.id === subjectId);
+  if(!subject) return;
+  const part = subject.parts.find(p => p.id === partId);
+  if(!part) return;
+  part.chapters.push(makeChapter(name.trim(), subject.type));
+  saveData(); render();
+}
+function deleteChapter(subjectId, partId, chapterId){
+  const subject = data.subjects.find(s => s.id === subjectId);
+  const part = subject && subject.parts.find(p => p.id === partId);
+  if(!part) return;
+  part.chapters = part.chapters.filter(c => c.id !== chapterId);
+  saveData(); render();
+}
+function toggleSubItem(subjectId, partId, chapterId, key){
+  const subject = data.subjects.find(s => s.id === subjectId);
+  const part = subject && subject.parts.find(p => p.id === partId);
+  const chapter = part && part.chapters.find(c => c.id === chapterId);
+  if(!chapter) return;
+  chapter.subItems[key] = !chapter.subItems[key];
+  saveData(); render();
+}
+function toggleExpand(subjectId){
+  if(expanded.has(subjectId)) expanded.delete(subjectId);
+  else expanded.add(subjectId);
+  render();
+}
+
+/* ---------- Render ---------- */
+function render(){
+  const container = document.getElementById('subjectsContainer');
+  const emptyState = document.getElementById('emptyState');
+  const overviewPanel = document.getElementById('overviewPanel');
+  const overviewRows = document.getElementById('overviewRows');
+  container.innerHTML = '';
+
+  if(data.subjects.length === 0){
+    emptyState.style.display = 'block';
+    overviewPanel.style.display = 'none';
+  } else {
+    emptyState.style.display = 'none';
+    overviewPanel.style.display = 'block';
+  }
+
+  overviewRows.innerHTML = data.subjects.map(s => {
+    const st = subjectStats(s);
+    return `
+      <div class="ov-row">
+        <div class="name">${escapeHtml(s.name)}</div>
+        <div class="track"><div class="fill" style="width:${st.pct}%"></div></div>
+        <div class="pct">${st.pct}%</div>
+      </div>`;
+  }).join('');
+
+  data.subjects.forEach(subject => {
+    const st = subjectStats(subject);
+    const isExpanded = expanded.has(subject.id);
+
+    const card = document.createElement('div');
+    card.className = 'subject' + (isExpanded ? ' expanded' : '');
+
+    const partsHtml = subject.parts.map(part => {
+      const pst = partStats(part);
+      const chaptersHtml = part.chapters.map(ch => {
+        const cst = chapterStats(ch);
+        if(subject.type === 'simple'){
+          const doneKey = Object.keys(ch.subItems)[0];
+          const isDone = ch.subItems[doneKey];
+          return `
+            <div class="chapter">
+              <div class="simple-check">
+                <input type="checkbox" ${isDone ? 'checked' : ''} data-action="toggle-item" data-subject="${subject.id}" data-part="${part.id}" data-chapter="${ch.id}" data-key="${doneKey}">
+                <span class="chapter-name">${escapeHtml(ch.name)}</span>
+                <button class="del-btn" data-action="del-chapter" data-subject="${subject.id}" data-part="${part.id}" data-chapter="${ch.id}">✕</button>
+              </div>
+            </div>`;
+        }
+        return `
+          <div class="chapter">
+            <div class="chapter-row">
+              <span class="chapter-name">${escapeHtml(ch.name)}</span>
+              <span class="chapter-pct-badge ${cst.pct === 100 ? 'done' : ''}">${cst.done}/${cst.total}</span>
+              <button class="del-btn" data-action="del-chapter" data-subject="${subject.id}" data-part="${part.id}" data-chapter="${ch.id}">✕</button>
+            </div>
+            <div class="chips">
+              ${Object.keys(ch.subItems).map(key => `
+                <button class="chip ${ch.subItems[key] ? 'active' : ''}" data-action="toggle-item" data-subject="${subject.id}" data-part="${part.id}" data-chapter="${ch.id}" data-key="${escapeHtml(key)}">${escapeHtml(key)}</button>
+              `).join('')}
+            </div>
+          </div>`;
+      }).join('');
+
+      return `
+        <div class="part">
+          <div class="part-head">
+            <span class="part-title">${escapeHtml(part.name)}</span>
+            <span class="part-pct">${pst.done}/${pst.total} · ${pst.pct}%</span>
+            <button class="del-btn" data-action="del-part" data-subject="${subject.id}" data-part="${part.id}" title="Delete part">✕</button>
+          </div>
+          <div class="part-progress"><div class="fill" style="width:${pst.pct}%"></div></div>
+          ${chaptersHtml}
+          <div class="add-chapter-row">
+            <input type="text" placeholder="New chapter name" data-chapter-input="${part.id}">
+            <button class="btn small" data-action="add-chapter" data-subject="${subject.id}" data-part="${part.id}">+ Add Chapter</button>
+          </div>
+        </div>`;
+    }).join('');
+
+    card.innerHTML = `
+      <div class="subject-head" data-action="toggle-expand" data-subject="${subject.id}">
+        <span class="chev">▶</span>
+        <div class="subject-main">
+          <div class="subject-title-row">
+            <span class="subject-title">${escapeHtml(subject.name)}</span>
+            <span class="subject-count">${st.done}/${st.total} · ${st.pct}%</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" style="width:${st.pct}%"></div></div>
+        </div>
+        <button class="del-btn" data-action="del-subject" data-subject="${subject.id}" title="Delete subject">✕</button>
+      </div>
+      <div class="subject-body">
+        ${partsHtml}
+        <div class="add-part-row">
+          <input type="text" placeholder="New part name (e.g. 3rd Paper)" data-part-input="${subject.id}">
+          <button class="btn small ghost" data-action="add-part" data-subject="${subject.id}">+ Add Part</button>
+        </div>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+
+  const overall = overallStats();
+  const circumference = 333;
+  const offset = circumference - (overall.pct/100)*circumference;
+  document.getElementById('pieFill').setAttribute('stroke-dashoffset', offset);
+  document.getElementById('piePct').textContent = overall.pct + '%';
+  document.getElementById('legendDone').textContent = overall.done + ' items';
+  document.getElementById('legendRemaining').textContent = (overall.total - overall.done) + ' items';
+  const overallSub = document.getElementById('overallSub');
+  overallSub.textContent = overall.total === 0
+    ? 'No chapters added yet'
+    : `${overall.done} of ${overall.total} items completed`;
+
+  attachEvents();
+}
+
+function attachEvents(){
+  document.querySelectorAll('[data-action="toggle-expand"]').forEach(el => {
+    el.addEventListener('click', (e) => {
+      if(e.target.closest('.del-btn')) return;
+      toggleExpand(el.dataset.subject);
+    });
+  });
+  document.querySelectorAll('[data-action="del-subject"]').forEach(el => {
+    el.addEventListener('click', (e) => { e.stopPropagation(); deleteSubject(el.dataset.subject); });
+  });
+  document.querySelectorAll('[data-action="del-part"]').forEach(el => {
+    el.addEventListener('click', (e) => { e.stopPropagation(); deletePart(el.dataset.subject, el.dataset.part); });
+  });
+  document.querySelectorAll('[data-action="del-chapter"]').forEach(el => {
+    el.addEventListener('click', (e) => { e.stopPropagation(); deleteChapter(el.dataset.subject, el.dataset.part, el.dataset.chapter); });
+  });
+  document.querySelectorAll('[data-action="toggle-item"]').forEach(el => {
+    const handler = (e) => { e.stopPropagation(); toggleSubItem(el.dataset.subject, el.dataset.part, el.dataset.chapter, el.dataset.key); };
+    el.addEventListener('click', handler);
+    if(el.tagName === 'INPUT') el.addEventListener('change', handler);
+  });
+  document.querySelectorAll('[data-action="add-chapter"]').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const input = document.querySelector(`[data-chapter-input="${el.dataset.part}"]`);
+      addChapter(el.dataset.subject, el.dataset.part, input.value);
+      input.value = '';
+    });
+  });
+  document.querySelectorAll('[data-chapter-input]').forEach(el => {
+    el.addEventListener('click', (e) => e.stopPropagation());
+    el.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter'){
+        const partId = el.dataset.chapterInput;
+        const subjectId = el.closest('.subject').querySelector('[data-action="toggle-expand"]').dataset.subject;
+        addChapter(subjectId, partId, el.value);
+        el.value = '';
+      }
+    });
+  });
+  document.querySelectorAll('[data-action="add-part"]').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const input = document.querySelector(`[data-part-input="${el.dataset.subject}"]`);
+      addPart(el.dataset.subject, input.value);
+      input.value = '';
+    });
+  });
+  document.querySelectorAll('[data-part-input]').forEach(el => {
+    el.addEventListener('click', (e) => e.stopPropagation());
+    el.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter'){
+        addPart(el.dataset.partInput, el.value);
+        el.value = '';
+      }
+    });
+  });
+}
+
+document.getElementById('addSubjectBtn').addEventListener('click', () => {
+  const nameInput = document.getElementById('newSubjectInput');
+  addSubject(nameInput.value);
+  nameInput.value = '';
+});
+document.getElementById('newSubjectInput').addEventListener('keydown', (e) => {
+  if(e.key === 'Enter'){
+    addSubject(e.target.value);
+    e.target.value = '';
+  }
+});
+
+loadData();
+</script>
+</body>
+</html>
